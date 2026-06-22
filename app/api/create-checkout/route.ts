@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 export async function POST(req: NextRequest) {
   try {
+    // 🔥 Initialize Stripe INSIDE the handler, using the env var
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      // No hardcoded version – let it use your account default
+    })
+
     const { listingId, tier, price, visitorId } = await req.json()
 
     const session = await stripe.checkout.sessions.create({
