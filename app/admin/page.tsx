@@ -71,7 +71,7 @@ export default function AdminPage() {
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName)
     const imageUrl = urlData.publicUrl
 
-    // 3. Insert into listings table
+    // @ts-ignore
     const { error: insertError } = await supabase
       .from('listings')
       .insert({
