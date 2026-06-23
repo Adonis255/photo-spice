@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
-import { loadStripe } from '@stripe/stripe-js'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import { PaystackButton } from '@paystack/react-paystack'
 
 const getVisitorId = () => {
   let id = localStorage.getItem('visitor_id')
@@ -88,7 +86,7 @@ export default function Home() {
     fetchData(id)
   }, [filter])
 
-  // Auto-refresh when returning from Stripe (client-side only)
+  // Auto-refresh when returning from Paystack (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -114,28 +112,6 @@ export default function Home() {
     setIsModalOpen(true)
   }
 
-  const handleCheckout = async () => {
-    if (!modalListing || !visitorId) return
-    const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
-    try {
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listingId: modalListing.id,
-          tier: modalTier,
-          price,
-          visitorId,
-        }),
-      })
-      const data = await res.json()
-      if (!data.url) throw new Error('No checkout URL')
-      window.location.href = data.url
-    } catch (err) {
-      toast.error('Payment initiation failed')
-    }
-  }
-
   const downloadImage = (url: string, name: string) => {
     const link = document.createElement('a')
     link.href = url
@@ -143,6 +119,18 @@ export default function Home() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  // Paystack Success Handler
+  const onPaystackSuccess = (reference: any) => {
+    toast.success('Payment successful! Refreshing...')
+    if (visitorId) fetchData(visitorId, true)
+    setIsModalOpen(false)
+  }
+
+  const onPaystackClose = () => {
+    toast.error('Payment cancelled')
+    setIsModalOpen(false)
   }
 
   return (
@@ -275,12 +263,33 @@ export default function Home() {
                   KSh {modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes}
                 </p>
               </div>
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-pink-200 hover:scale-[1.02] transition-all active:scale-95"
-              >
-                💳 Pay with M-Pesa / Card
-              </button>
+
+              {/* 🔥 PAYSTACK BUTTON (Replaces Stripe) */}
+              {(() => {
+                const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
+                const paystackConfig = {
+                  reference: new Date().getTime().toString(),
+                  email: 'customer@example.com',
+                  amount: price * 100, // Paystack uses Kobo (1 KES = 100 Kobo)
+                  publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+                  metadata: {
+                    listing_id: modalListing.id,
+                    tier: modalTier,
+                    visitor_id: visitorId,
+                  }
+                }
+
+                return (
+                  <PaystackButton
+                    {...paystackConfig}
+                    text="💳 Pay with M-Pesa / Card"
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-pink-200 hover:scale-[1.02] transition-all active:scale-95"
+                    onSuccess={onPaystackSuccess}
+                    onClose={onPaystackClose}
+                  />
+                )
+              })()}
+
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="mt-4 text-gray-400 text-sm underline-offset-2 hover:underline"
