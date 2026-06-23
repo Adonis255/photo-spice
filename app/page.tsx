@@ -30,7 +30,6 @@ type Listing = {
   hasPhoto: boolean
   hasNumber: boolean
   is_free?: boolean
-  // NEW: Admin-controlled flags
   is_blurred?: boolean
   is_number_locked?: boolean
 }
@@ -54,7 +53,6 @@ export default function Home() {
   const shuffleInterval = useRef<NodeJS.Timeout | null>(null)
   const isMounted = useRef(true)
 
-  // --- Memoized fetch function ---
   const fetchData = useCallback(async (vId: string, showLoading = true) => {
     if (showLoading) setLoading(true)
     try {
@@ -83,7 +81,6 @@ export default function Home() {
         hasPhoto: photoPurchased.has(item.id),
         hasNumber: numberPurchased.has(item.id),
         is_free: false,
-        // Keep admin flags (they come from the DB)
         is_blurred: item.is_blurred ?? false,
         is_number_locked: item.is_number_locked ?? true,
       })) || []
@@ -108,7 +105,6 @@ export default function Home() {
     }
   }, [filter])
 
-  // --- Optimized search ---
   const applySearch = useCallback((search: string) => {
     if (!search.trim()) {
       setFilteredListings(listings)
@@ -122,7 +118,6 @@ export default function Home() {
     setFilteredListings(filtered)
   }, [listings])
 
-  // --- Shuffle function ---
   const shuffleListings = useCallback(() => {
     if (!isShuffling || filteredListings.length <= 1) return
     const shuffled = [...filteredListings]
@@ -133,21 +128,18 @@ export default function Home() {
     setFilteredListings(shuffled)
   }, [filteredListings, isShuffling])
 
-  // --- Effects ---
   useEffect(() => {
     isMounted.current = true
     const id = getVisitorId()
     setVisitorId(id)
     fetchData(id)
     return () => { isMounted.current = false }
-  }, [filter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filter])
 
-  // Apply search when listings or search term changes
   useEffect(() => {
     applySearch(searchTerm)
   }, [applySearch, searchTerm])
 
-  // Auto-shuffle every 15 seconds
   useEffect(() => {
     if (shuffleInterval.current) clearInterval(shuffleInterval.current)
     if (filteredListings.length > 1 && isShuffling) {
@@ -158,7 +150,6 @@ export default function Home() {
     }
   }, [filteredListings.length, isShuffling, shuffleListings])
 
-  // Detect dark mode
   useEffect(() => {
     const checkDark = () => {
       setDarkMode(document.documentElement.classList.contains('dark'))
@@ -174,7 +165,6 @@ export default function Home() {
     }
   }, [])
 
-  // Auto-refresh after payment
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -188,7 +178,6 @@ export default function Home() {
     }
   }, [fetchData, router])
 
-  // --- Handlers ---
   const handleRefresh = useCallback(() => {
     if (!visitorId) return
     setRefreshing(true)
@@ -275,7 +264,6 @@ export default function Home() {
     }`}>
       <Toaster position="top-center" />
 
-      {/* Floating Emojis */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="floating-emoji" style={{ left: '8%', animationDelay: '0s' }}>💋</div>
         <div className="floating-emoji" style={{ left: '20%', animationDelay: '1.2s' }}>😘</div>
@@ -291,13 +279,12 @@ export default function Home() {
         <div className="text-center py-4">
           <div className="flex justify-between items-center max-w-6xl mx-auto px-4">
             <div className="flex-1 text-center">
-              <h1 className={`text-3xl md:text-4xl font-bold transition-colors duration-300 ${
-                darkMode 
-                  ? 'text-white' 
-                  : 'bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent'
-              }`}>
-                🔥 Spicy Connections 🔥
-              </h1>
+              {/* Logo - replace with your own image in public/logo.png */}
+              <img
+                src="/logo.jpg"
+                alt="Spicy Connections"
+                className="h-10 w-10 md:h-14 md:w-14 rounded-full object-cover mx-auto transition-all duration-300"
+              />
               <p className={`text-sm transition-colors duration-300 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 💕 Get connected with your soulmate today 💕
               </p>
@@ -327,7 +314,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="max-w-md mx-auto mt-3 px-4">
             <input
               type="text"
@@ -389,10 +375,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
             {displayListings.map((item) => {
-              // --- NEW LOGIC ---
-              // Photo is unblurred if purchased OR admin set is_blurred = false
               const isPhotoUnlocked = item.hasPhoto || !item.is_blurred
-              // Number is visible if purchased OR admin set is_number_locked = false
               const isNumberVisible = item.hasNumber || !item.is_number_locked
               const isFree = item.is_free || false
 
@@ -405,7 +388,6 @@ export default function Home() {
                       : 'bg-white/80 backdrop-blur-sm border-pink-100'
                   }`}
                 >
-                  {/* Circular Image */}
                   <div className="relative w-full aspect-square rounded-full overflow-hidden shadow-md ring-2 ring-pink-200 floating">
                     <img
                       src={item.image_url}
@@ -426,14 +408,12 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Name */}
                   <h3 className={`font-bold text-sm mt-3 truncate w-full text-center ${
                     darkMode ? 'text-white' : 'text-gray-800'
                   }`}>
                     {item.name}
                   </h3>
 
-                  {/* Phone Number */}
                   <div className={`w-full rounded-lg p-1.5 my-2 text-center font-mono text-xs flex items-center justify-center gap-1 ${
                     darkMode ? 'bg-gray-700' : 'bg-gray-100'
                   }`}>
@@ -446,7 +426,6 @@ export default function Home() {
                     {!isNumberVisible && <span className="text-[10px] bg-gray-200 px-1 rounded">Locked</span>}
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="w-full space-y-1.5 mt-1">
                     {!isPhotoUnlocked ? (
                       <button
@@ -486,7 +465,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Description */}
                   <p className={`text-xs text-center mt-2 line-clamp-2 ${
                     darkMode ? 'text-gray-400' : 'text-gray-500'
                   }`}>
