@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
+import {getSupabaseClient } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -25,10 +25,7 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
     const { listing_id, tier, visitor_id } = session.metadata!
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseAdmin = getSupabaseClient()
 
     const { error } = await supabaseAdmin
       .from('purchases')
