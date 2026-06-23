@@ -118,13 +118,11 @@ export default function Home() {
     document.body.removeChild(link)
   }
 
-  // 🔥 Paystack inline script handler
   const handlePaystackPayment = () => {
     if (!modalListing || !visitorId) return
 
     const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
 
-    // Load Paystack script dynamically
     const script = document.createElement('script')
     script.src = 'https://js.paystack.co/v1/inline.js'
     script.async = true
@@ -134,7 +132,7 @@ export default function Home() {
       const handler = (window as any).PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: 'customer@example.com',
-        amount: price * 100, // in kobo
+        amount: price * 100,
         ref: new Date().getTime().toString(),
         metadata: {
           listing_id: modalListing.id,
@@ -283,7 +281,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* 🔥 Paystack inline button */}
               <button
                 onClick={handlePaystackPayment}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-pink-200 hover:scale-[1.02] transition-all active:scale-95"
