@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
-import { PaystackButton } from 'react-paystack' // ✅ CORRECT PACKAGE
 
 const getVisitorId = () => {
   let id = localStorage.getItem('visitor_id')
@@ -119,15 +118,41 @@ export default function Home() {
     document.body.removeChild(link)
   }
 
-  const onPaystackSuccess = (reference: any) => {
-    toast.success('Payment successful! Refreshing...')
-    if (visitorId) fetchData(visitorId, true)
-    setIsModalOpen(false)
-  }
+  // 🔥 Paystack inline script handler
+  const handlePaystackPayment = () => {
+    if (!modalListing || !visitorId) return
 
-  const onPaystackClose = () => {
-    toast.error('Payment cancelled')
-    setIsModalOpen(false)
+    const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
+
+    // Load Paystack script dynamically
+    const script = document.createElement('script')
+    script.src = 'https://js.paystack.co/v1/inline.js'
+    script.async = true
+    document.body.appendChild(script)
+
+    script.onload = () => {
+      const handler = (window as any).PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: 'customer@example.com',
+        amount: price * 100, // in kobo
+        ref: new Date().getTime().toString(),
+        metadata: {
+          listing_id: modalListing.id,
+          tier: modalTier,
+          visitor_id: visitorId,
+        },
+        callback: (response: any) => {
+          toast.success('Payment successful! Refreshing...')
+          if (visitorId) fetchData(visitorId, true)
+          setIsModalOpen(false)
+        },
+        onClose: () => {
+          toast.error('Payment cancelled')
+          setIsModalOpen(false)
+        }
+      })
+      handler.openIframe()
+    }
   }
 
   return (
@@ -258,30 +283,13 @@ export default function Home() {
                 </p>
               </div>
 
-              {(() => {
-                const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
-                const paystackConfig = {
-                  reference: new Date().getTime().toString(),
-                  email: 'customer@example.com',
-                  amount: price * 100,
-                  publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
-                  metadata: {
-                    listing_id: modalListing.id,
-                    tier: modalTier,
-                    visitor_id: visitorId,
-                  }
-                }
-
-                return (
-                  <PaystackButton
-                    {...paystackConfig}
-                    text="💳 Pay with M-Pesa / Card"
-                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-pink-200 hover:scale-[1.02] transition-all active:scale-95"
-                    onSuccess={onPaystackSuccess}
-                    onClose={onPaystackClose}
-                  />
-                )
-              })()}
+              {/* 🔥 Paystack inline button */}
+              <button
+                onClick={handlePaystackPayment}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-pink-200 hover:scale-[1.02] transition-all active:scale-95"
+              >
+                💳 Pay with M-Pesa / Card
+              </button>
 
               <button
                 onClick={() => setIsModalOpen(false)}
