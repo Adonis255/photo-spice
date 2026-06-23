@@ -82,7 +82,7 @@ export default function AdminPage() {
         number_price_kes: parseInt(numberPrice),
         phone_number: phoneNumber,
         image_url: imageUrl,
-      })
+      } as any)
 
     if (insertError) {
       toast.error('Failed to save listing: ' + insertError.message)
