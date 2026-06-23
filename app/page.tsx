@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
-import { PaystackButton } from '@paystack/react-paystack'
+import { PaystackButton } from 'react-paystack' // ✅ CORRECT PACKAGE
 
 const getVisitorId = () => {
   let id = localStorage.getItem('visitor_id')
@@ -79,14 +79,12 @@ export default function Home() {
     }
   }
 
-  // Initial load and filter changes
   useEffect(() => {
     const id = getVisitorId()
     setVisitorId(id)
     fetchData(id)
   }, [filter])
 
-  // Auto-refresh when returning from Paystack (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -121,7 +119,6 @@ export default function Home() {
     document.body.removeChild(link)
   }
 
-  // Paystack Success Handler
   const onPaystackSuccess = (reference: any) => {
     toast.success('Payment successful! Refreshing...')
     if (visitorId) fetchData(visitorId, true)
@@ -150,7 +147,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap justify-center gap-2 my-4">
         {['all', 'male', 'female', 'international', 'local'].map((cat) => (
           <button
@@ -167,7 +163,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Gallery */}
       {loading ? (
         <div className="text-center py-20 text-gray-400">Loading spicy content...</div>
       ) : (
@@ -239,7 +234,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modal */}
       {isModalOpen && modalListing && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 shadow-2xl animate-in slide-in-from-bottom-10">
@@ -264,13 +258,12 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* 🔥 PAYSTACK BUTTON (Replaces Stripe) */}
               {(() => {
                 const price = modalTier === 'photo' ? modalListing.photo_price_kes : modalListing.number_price_kes
                 const paystackConfig = {
                   reference: new Date().getTime().toString(),
                   email: 'customer@example.com',
-                  amount: price * 100, // Paystack uses Kobo (1 KES = 100 Kobo)
+                  amount: price * 100,
                   publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
                   metadata: {
                     listing_id: modalListing.id,

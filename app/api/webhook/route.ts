@@ -1,48 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
-  console.log('🔔 Webhook received!')
+  console.log('🔔 Paystack webhook received')
   
   try {
-    const body = await req.text()
-    const signature = req.headers.get('stripe-signature')!
+    // Paystack sends JSON, not raw text
+    const body = await req.json()
+    const signature = req.headers.get('x-paystack-signature')
 
-    // Check environment variables
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('❌ STRIPE_SECRET_KEY is missing!')
-      return NextResponse.json({ error: 'Stripe key missing' }, { status: 500 })
+    // Verify signature (optional but recommended for production)
+    const secret = process.env.PAYSTACK_SECRET_KEY
+    if (!secret) {
+      console.error('❌ PAYSTACK_SECRET_KEY is missing!')
+      return NextResponse.json({ error: 'Paystack secret missing' }, { status: 500 })
     }
 
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      console.error('❌ STRIPE_WEBHOOK_SECRET is missing!')
-      return NextResponse.json({ error: 'Webhook secret missing' }, { status: 500 })
+    // Compute expected signature using SHA512
+    const expectedSignature = crypto
+      .createHmac('sha512', secret)
+      .update(JSON.stringify(body))
+      .digest('hex')
+
+    // For security, reject if signatures don't match
+    if (signature && expectedSignature !== signature) {
+      console.error('❌ Webhook signature mismatch')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+    const { event, data } = body
+    console.log('📦 Event type:', event)
 
-    let event: Stripe.Event
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
-      console.log('✅ Webhook signature verified. Event type:', event.type)
-    } catch (err) {
-      console.error('❌ Webhook signature verification failed:', err)
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
-    }
+    // Handle charge.success event (successful payment)
+    if (event === 'charge.success') {
+      const { metadata } = data
+      const { listing_id, tier, visitor_id } = metadata || {}
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session
-      const { listing_id, tier, visitor_id } = session.metadata || {}
-
-      console.log('📦 Session metadata:', { listing_id, tier, visitor_id })
+      console.log('📦 Metadata:', { listing_id, tier, visitor_id })
 
       if (!listing_id || !tier || !visitor_id) {
         console.error('❌ Missing metadata in webhook!')
         return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
       }
 
-      // 🔥 CREATE SUPABASE CLIENT WITH SERVICE ROLE KEY (BYPASSES RLS)
+      // Use Supabase service role key to bypass RLS
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -53,16 +55,14 @@ export async function POST(req: NextRequest) {
 
       const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-      console.log('✅ Supabase admin client created')
-
-      // Insert the purchase
-      const { data, error } = await supabaseAdmin
+      // Save purchase to Supabase
+      const { data: inserted, error } = await supabaseAdmin
         .from('purchases')
         .insert({
           listing_id,
           visitor_id,
           tier,
-          stripe_session_id: session.id,
+          stripe_session_id: data.reference, // Paystack transaction reference
         })
         .select()
 
@@ -71,10 +71,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
 
-      console.log('✅ Purchase saved successfully!', data)
-      return NextResponse.json({ success: true, data })
+      console.log('✅ Purchase saved successfully!', inserted)
+      return NextResponse.json({ success: true })
     }
 
+    // Acknowledge receipt for other events
     return NextResponse.json({ received: true })
   } catch (err) {
     console.error('❌ Unhandled webhook error:', err)
