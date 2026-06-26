@@ -226,6 +226,7 @@ export default function Home() {
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: 'customer@example.com',
         amount: price * 100,
+        currency: 'KES', // 🔥 FIX: Added currency
         ref: new Date().getTime().toString(),
         metadata: {
           listing_id: modalListing.id,
@@ -279,7 +280,6 @@ export default function Home() {
         <div className="text-center py-4">
           <div className="flex justify-between items-center max-w-6xl mx-auto px-4">
             <div className="flex-1 text-center">
-              {/* Logo - replace with your own image in public/logo.png */}
               <img
                 src="/logo.jpg"
                 alt="Spicy Connections"
@@ -343,7 +343,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Categories */}
         <div className="flex flex-wrap justify-center gap-2 my-4">
           {['all', 'free', 'international', 'male', 'female'].map((cat) => (
             <button
@@ -362,7 +361,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Gallery */}
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
@@ -476,7 +474,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Modal */}
         {isModalOpen && modalListing && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
             <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 shadow-2xl animate-in slide-in-from-bottom-10">

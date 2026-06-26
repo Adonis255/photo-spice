@@ -73,6 +73,7 @@ function SuccessContent() {
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: 'customer@example.com',
         amount: price * 100,
+        currency: 'KES', // 🔥 FIX: Added currency
         ref: new Date().getTime().toString(),
         metadata: {
           listing_id: listing.id,
