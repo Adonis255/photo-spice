@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { Geist, Geist_Mono } from "next/font/google"
-import { Script } from "next/script"  // ✅ Added
 import "./globals.css"
 
 const geistSans = Geist({
@@ -71,20 +70,21 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* ✅ GOOGLE ANALYTICS - ADD THIS */}
-        <Script
+        {/* ✅ Google Analytics – Using traditional script to avoid build errors */}
+        <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-YRQ379YwW1"
-          strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-YRQ379YwW1');
-          `}
-        </Script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-YRQ379YwW1');
+            `,
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col theme-transition">
         {children}
