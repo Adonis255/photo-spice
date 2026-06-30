@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Geist, Geist_Mono } from "next/font/google"
+import { Script } from "next/script"  // ✅ Added
 import "./globals.css"
 
 const geistSans = Geist({
@@ -22,7 +23,6 @@ export default function RootLayout({
   const [darkMode, setDarkMode] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Load dark mode preference on mount
   useEffect(() => {
     const saved = localStorage.getItem('darkMode')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -31,7 +31,6 @@ export default function RootLayout({
     setMounted(true)
   }, [])
 
-  // Apply dark class to html element and save preference
   useEffect(() => {
     if (mounted) {
       if (darkMode) {
@@ -44,20 +43,16 @@ export default function RootLayout({
     }
   }, [darkMode, mounted])
 
-  // Listen for dark mode toggle events from page components
   useEffect(() => {
     const handleThemeToggle = (e: CustomEvent) => {
       setDarkMode(e.detail)
     }
-
     window.addEventListener('themeToggle' as any, handleThemeToggle)
-
     return () => {
       window.removeEventListener('themeToggle' as any, handleThemeToggle)
     }
   }, [])
 
-  // Expose toggle function globally for components
   useEffect(() => {
     if (mounted) {
       ;(window as any).toggleDarkMode = () => {
@@ -75,6 +70,22 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* ✅ GOOGLE ANALYTICS - ADD THIS */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-YRQ379YwW1"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-YRQ379YwW1');
+          `}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col theme-transition">
         {children}
       </body>
