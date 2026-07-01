@@ -286,7 +286,7 @@ export default function Home() {
                 className="h-10 w-10 md:h-14 md:w-14 rounded-full object-cover mx-auto transition-all duration-300"
               />
               <p className={`text-sm transition-colors duration-300 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                💕 Get connected with your soulmate today 💕
+                💕 Get connected with your soulmate today. <hr>Check the profile, pay for the number of your desired soulmate, chat via whatsapp or via phone call 💕
               </p>
             </div>
             <div className="flex gap-2">
