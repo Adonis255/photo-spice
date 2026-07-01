@@ -70,10 +70,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* ✅ Google Analytics – Using traditional script to avoid build errors */}
+        {/* ✅ GOOGLE ANALYTICS - ADD THIS EXACT CODE */}
         <script
           async
-          src="https://www.googletagmanager.com/gtag/js?id=G-YRQ379YwW1"
+          src="https://www.googletagmanager.com/gtag/js?id=G-JW8XGYGQBR"
         />
         <script
           dangerouslySetInnerHTML={{
@@ -81,7 +81,7 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-YRQ379YwW1');
+              gtag('config', 'G-JW8XGYGQBR');
             `,
           }}
         />
