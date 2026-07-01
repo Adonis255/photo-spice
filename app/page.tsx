@@ -276,6 +276,7 @@ export default function Home() {
       </div>
 
       <div className="relative z-10">
+        {/* Header */}
         <div className="text-center py-4">
           <div className="flex justify-between items-center max-w-6xl mx-auto px-4">
             <div className="flex-1 text-center">
@@ -284,7 +285,7 @@ export default function Home() {
                 alt="Spicy Connections"
                 className="h-10 w-10 md:h-14 md:w-14 rounded-full object-cover mx-auto transition-all duration-300"
               />
-              {/* 🔥 FIXED: No <hr> inside <p>, use <div> with <br /> */}
+              {/* ✅ FIXED: No <hr> inside <p> */}
               <div className={`text-sm transition-colors duration-300 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 💕 Get connected with your soulmate today.
                 <br />
